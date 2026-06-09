@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>b-Habits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #0d1117;
+  color: #dde4f0;
+  min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* ── Variables ── */
+:root {
+  --bg0: #0d1117;
+  --bg1: #161b27;
+  --bg2: #1e2635;
+  --bg3: #28354a;
+  --teal: #00c2a8;
+  --teal-dim: rgba(0,194,168,0.12);
+  --teal-mid: rgba(0,194,168,0.3);
+  --gold: #f0c040;
+  --gold-dim: rgba(240,192,64,0.12);
+  --green: #22c77a;
+  --green-dim: rgba(34,199,122,0.15);
+  --green-border: rgba(34,199,122,0.5);
+  --muted: #4a5568;
+  --text: #dde4f0;
+  --text-dim: #6b7a99;
+  --text-mid: #9aaac8;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.13);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+/* ── Layout ── */
+#app { max-width: 520px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+.header {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.05rem;
+  color: var(--teal);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--text-dim); }
+
+.month-nav { display: flex; align-items: center; gap: 0.75rem; }
+.month-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  min-width: 80px;
+  text-align: center;
+}
+.nav-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  color: var(--text-dim);
+  width: 26px; height: 26px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.nav-btn:hover { background: var(--bg3); color: var(--text); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 57px;
+  z-index: 99;
+}
+.tab {
+  flex: 1;
+  padding: 0.7rem 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+/* ── Content ── */
+.content { padding: 1.25rem; flex: 1; }
+
+/* ── Sync status ── */
+.sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg1);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.sync-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sync-dot.synced { background: var(--green); }
+.sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
+.sync-dot.error { background: #e05; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+/* ── Daily View ── */
+.day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.day-title { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--text-dim); }
+.day-title strong { color: var(--text); display: block; font-size: 0.95rem; margin-top: 2px; }
+
+.day-meta { display: flex; align-items: center; gap: 0.6rem; }
+
+.score-ring {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border-bright);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  transition: border-color 0.3s;
+}
+.score-ring.active { border-color: var(--teal); }
+.score-pct { font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700; color: var(--teal); }
+.score-lbl { font-size: 0.58rem; color: var(--text-dim); margin-top: 1px; }
+
+.streak-pill {
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  border-radius: 20px;
+  padding: 0.35rem 0.8rem;
+  display: flex; align-items: center; gap: 0.35rem;
+}
+.streak-num { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--gold); font-weight: 700; }
+.streak-lbl { font-size: 0.68rem; color: var(--text-dim); }
+
+.habits-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.habit-row {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.18s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.habit-row:active { transform: scale(0.98); }
+.habit-row:hover { background: var(--bg2); border-color: var(--border-bright); }
+.habit-row.done { background: var(--green-dim); border-color: var(--green-border); }
+
+.habit-left { display: flex; align-items: center; gap: 0.75rem; }
+.habit-emoji { font-size: 1.15rem; }
+.habit-name { font-size: 0.88rem; font-weight: 500; transition: color 0.18s; }
+.habit-row.done .habit-name { color: var(--green); }
+
+.habit-check {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-bright);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.habit-row.done .habit-check { background: var(--green); border-color: var(--green); color: #000; }
+
+.day-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.day-nav-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  color: var(--text-dim);
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.day-nav-btn:hover { background: var(--bg3); color: var(--text); }
+.today-btn { background: var(--teal-dim); border-color: var(--teal-mid); color: var(--teal); }
+.today-btn:hover { background: var(--teal-mid); }
+
+/* ── Heatmap ── */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 0.5rem; }
+.heatmap-inner { min-width: 480px; }
+
+.hm-header-row { display: flex; align-items: center; gap: 3px; margin-bottom: 4px; }
+.hm-label-spacer { width: 110px; flex-shrink: 0; }
+.hm-day-nums { display: flex; gap: 3px; }
+.hm-day-num {
+  width: 17px; text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem; color: var(--text-dim);
+}
+
+.hm-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; }
+.hm-habit-label {
+  width: 110px; flex-shrink: 0;
+  font-size: 0.72rem; color: var(--text-dim);
+  display: flex; align-items: center; gap: 5px;
+  overflow: hidden; white-space: nowrap;
+}
+.hm-cell {
+  width: 17px; height: 17px;
+  border-radius: 3px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+}
+.hm-cell:hover { transform: scale(1.25); z-index: 2; }
+.hm-cell.done { background: var(--green); border-color: var(--green); }
+.hm-cell.today { outline: 2px solid var(--teal); outline-offset: 1px; }
+.hm-cell.future { opacity: 0.25; cursor: default; pointer-events: none; }
+
+.hm-score-sep { height: 1px; background: var(--border); margin: 8px 0; }
+.hm-score-row { display: flex; align-items: center; gap: 3px; }
+.hm-score-label { width: 110px; flex-shrink: 0; font-size: 0.68rem; color: var(--text-dim); }
+.hm-score-cell {
+  width: 17px; height: 17px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.48rem;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: rgba(0,0,0,0.7);
+}
+
+/* ── Stats ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.stat-card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 0.8rem;
+}
+.stat-lbl { font-size: 0.68rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+.stat-val { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--teal); line-height: 1; }
+.stat-sub { font-size: 0.65rem; color: var(--text-dim); margin-top: 0.3rem; }
+
+.section-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 0.6rem;
+  margin-top: 1.1rem;
+}
+
+.habit-stat {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.habit-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.habit-stat-name { font-size: 0.84rem; display: flex; align-items: center; gap: 0.45rem; }
+.habit-stat-pct { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--teal); }
+.bar-track { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.bar-low { background: var(--muted); }
+.bar-mid { background: var(--gold); }
+.bar-high { background: var(--green); }
+
+/* ── Setup Screen ── */
+.setup-screen {
+  position: fixed; inset: 0;
+  background: var(--bg0);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  padding: 1.5rem;
+}
+.setup-card {
+  background: var(--bg1);
+  border: 1px solid var(--border-bright);
+  border-radius: 16px;
+  padding: 2rem 1.75rem;
+  width: 100%; max-width: 420px;
+}
+.setup-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem;
+  color: var(--teal);
+  margin-bottom: 0.5rem;
+}
+.setup-sub { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.75rem; line-height: 1.5; }
+.setup-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.3px; }
+.setup-input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.setup-input:focus { border-color: var(--teal); }
+.setup-input::placeholder { color: var(--text-dim); }
+.setup-btn {
+  width: 100%;
+  background: var(--teal);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 0.5rem;
+}
+.setup-btn:hover { opacity: 0.9; }
+.setup-btn:disabled { opacity: 0.4; cursor: default; }
+.setup-skip {
+  display: block;
+  text-align: center;
+  margin-top: 0.85rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.setup-skip:hover { color: var(--text); }
+.setup-error { font-size: 0.75rem; color: #ff6b6b; margin-top: -0.5rem; margin-bottom: 0.75rem; }
+.setup-step { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+.setup-step strong { color: var(--teal); }
+.setup-section-title {
+  font-size: 0.78rem; font-weight: 600; color: var(--text-mid);
+  margin-bottom: 1rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- Setup Screen -->
+<div class="setup-screen" id="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div class="setup-logo">b-Habits</div>
+    <div id="setup-content"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="header">
+    <div class="logo">b<span>-</span>Habits</div>
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+      <div class="month-label" id="month-label"></div>
+      <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-today" onclick="switchTab('today')">Today</div>
+    <div class="tab" id="tab-heatmap" onclick="switchTab('heatmap')">Heatmap</div>
+    <div class="tab" id="tab-stats" onclick="switchTab('stats')">Stats</div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+/* ════════════════════════════════════════════
+   CONFIG — paste your Firebase config here
+   ════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  // REPLACE THIS BLOCK with your Firebase config
+  // apiKey: "...",
+  // authDomain: "...",
+  // databaseURL: "...",
+  // projectId: "...",
+  // storageBucket: "...",
+  // messagingSenderId: "...",
+  // appId: "..."
+};
+
+/* ════════════════════════════════════════════
+   APP STATE
+   ════════════════════════════════════════════ */
+const HABITS = [
+  { id: 'exercise', name: 'Exercise / Movement', emoji: '🏃' },
+  { id: 'sleep',    name: 'Sleep',               emoji: '😴' },
+  { id: 'diet',     name: 'Diet / Eating well',  emoji: '🥗' },
+  { id: 'screen',   name: 'Screen Time Limits',  emoji: '📵' },
+  { id: 'work',     name: 'Work',                emoji: '💼' },
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+let db = null;
+let dbRef = null;
+let habitData = {};
+let syncStatus = 'local'; // 'local' | 'syncing' | 'synced' | 'error'
+let useFirebase = false;
+
+const t = new Date();
+let viewYear = t.getFullYear();
+let viewMonth = t.getMonth();
+let viewDay = t.getDate();
+let currentTab = 'today';
+
+/* ════════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════════ */
+function todayObj() {
+  const d = new Date();
+  return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() };
+}
+
+function dateKey(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function daysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+
+function isToday(y, m, d) {
+  const t = todayObj();
+  return y === t.y && m === t.m && d === t.d;
+}
+
+function isFuture(y, m, d) {
+  return new Date(y, m, d) > new Date(todayObj().y, todayObj().m, todayObj().d);
+}
+
+function formatDayLabel(y, m, d) {
+  if (isToday(y, m, d)) return 'Today';
+  const t = todayObj();
+  const yesterday = new Date(t.y, t.m, t.d - 1);
+  if (y === yesterday.getFullYear() && m === yesterday.getMonth() && d === yesterday.getDate()) return 'Yesterday';
+  return DAYS_FULL[new Date(y, m, d).getDay()];
+}
+
+function getDayData(y, m, d) { return habitData[dateKey(y, m, d)] || {}; }
+
+function getDayScore(y, m, d) {
+  const dd = getDayData(y, m, d);
+  return HABITS.filter(h => dd[h.id]).length;
+}
+
+function getStreak() {
+  let streak = 0;
+  const dt = new Date(todayObj().y, todayObj().m, todayObj().d);
+  for (let i = 0; i < 365; i++) {
+    const score = getDayScore(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    if (score < 4) break;
+    streak++;
+    dt.setDate(dt.getDate() - 1);
+  }
+  return streak;
+}
+
+/* ════════════════════════════════════════════
+   STORAGE
+   ════════════════════════════════════════════ */
+function loadLocal() {
+  try { habitData = JSON.parse(localStorage.getItem('bhabits_data') || '{}'); }
+  catch(e) { habitData = {}; }
+}
+
+function saveLocal() {
+  try { localStorage.setItem('bhabits_data', JSON.stringify(habitData)); }
+  catch(e) {}
+}
+
+function saveToFirebase() {
+  if (!dbRef) return;
+  syncStatus = 'syncing';
+  updateSyncBar();
+  set(dbRef, habitData)
+    .then(() => { syncStatus = 'synced'; updateSyncBar(); })
+    .catch(() => { syncStatus = 'error'; updateSyncBar(); });
+}
+
+function updateSyncBar() {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  if (!dot || !txt) return;
+  dot.className = 'sync-dot ' + (syncStatus === 'synced' ? 'synced' : syncStatus === 'syncing' ? 'syncing' : syncStatus === 'error' ? 'error' : '');
+  txt.textContent = syncStatus === 'synced' ? 'Synced to cloud' : syncStatus === 'syncing' ? 'Saving...' : syncStatus === 'error' ? 'Sync error — saved locally' : 'Saved locally (no sync)';
+}
+
+/* ════════════════════════════════════════════
+   TOGGLE HABIT
+   ════════════════════════════════════════════ */
+function toggle(y, m, d, hid) {
+  if (isFuture(y, m, d)) return;
+  const k = dateKey(y, m, d);
+  if (!habitData[k]) habitData[k] = {};
+  habitData[k][hid] = !habitData[k][hid];
+  if (!habitData[k][hid]) delete habitData[k][hid];
+  if (Object.keys(habitData[k]).length === 0) delete habitData[k];
+  saveLocal();
+  if (useFirebase) saveToFirebase();
+  render();
+}
+
+window.toggle = toggle;
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════════ */
+function changeMonth(dir) {
+  viewMonth += dir;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  updateMonthLabel();
+  render();
+}
+window.changeMonth = changeMonth;
+
+function goDay(dir) {
+  const dt = new Date(viewYear, viewMonth, viewDay);
+  dt.setDate(dt.getDate() + dir);
+  viewYear = dt.getFullYear();
+  viewMonth = dt.getMonth();
+  viewDay = dt.getDate();
+  updateMonthLabel();
+  render();
+}
+window.goDay = goDay;
+
+function goToday() {
+  const t = todayObj();
+  viewYear = t.y; viewMonth = t.m; viewDay = t.d;
+  updateMonthLabel();
+  render();
+}
+window.goToday = goToday;
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['today','heatmap','stats'].forEach(t => {
+    document.getElementById('tab-' + t)?.classList.toggle('active', t === tab);
+  });
+  render();
+}
+window.switchTab = switchTab;
+
+function updateMonthLabel() {
+  const el = document.getElementById('month-label');
+  if (el) el.textContent = MONTHS[viewMonth].slice(0,3) + ' ' + viewYear;
+}
+
+function jumpToDay(y, m, d) {
+  viewYear = y; viewMonth = m; viewDay = d;
+  updateMonthLabel();
+  switchTab('today');
+}
+window.jumpToDay = jumpToDay;
+
+/* ════════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════════ */
+function render() {
+  if (currentTab === 'today') renderToday();
+  else if (currentTab === 'heatmap') renderHeatmap();
+  else renderStats();
+}
+
+function syncBar() {
+  return `<div class="sync-bar">
+    <div class="sync-dot ${syncStatus === 'synced' ? 'synced' : syncStatus === 'syncing' ? 'syncing' : syncStatus === 'error' ? 'error' : ''}" id="sync-dot"></div>
+    <span id="sync-txt">${syncStatus === 'synced' ? 'Synced to cloud' : syncStatus === 'syncing' ? 'Saving...' : syncStatus === 'error' ? 'Sync error — saved locally' : 'Saved locally (no sync)'}</span>
+  </div>`;
+}
+
+/* ── TODAY ── */
+function renderToday() {
+  const y = viewYear, m = viewMonth, d = viewDay;
+  const dd = getDayData(y, m, d);
+  const score = getDayScore(y, m, d);
+  const pct = Math.round(score / HABITS.length * 100);
+  const streak = getStreak();
+  const dayLabel = formatDayLabel(y, m, d);
+  const dateStr = d + ' ' + MONTHS[m].slice(0,3) + ' ' + y;
+  const future = isFuture(y, m, d);
+
+  let html = syncBar();
+  html += `<div class="day-header">
+    <div class="day-title">
+      <span>${dateStr}</span>
+      <strong>${dayLabel}</strong>
+    </div>
+    <div class="day-meta">
+      <div class="streak-pill">
+        <span style="font-size:1rem">🔥</span>
+        <span class="streak-num">${streak}</span>
+        <span class="streak-lbl">streak</span>
+      </div>
+      <div class="score-ring ${score > 0 ? 'active' : ''}">
+        <span class="score-pct">${pct}%</span>
+        <span class="score-lbl">${score}/${HABITS.length}</span>
+      </div>
+    </div>
+  </div>`;
+
+  if (future) {
+    html += `<div style="text-align:center;padding:2rem 0;color:var(--text-dim);font-size:0.85rem">Future date — come back then!</div>`;
+  } else {
+    html += `<div class="habits-list">`;
+    HABITS.forEach(h => {
+      const done = !!dd[h.id];
+      html += `<div class="habit-row ${done ? 'done' : ''}" onclick="toggle(${y},${m},${d},'${h.id}')">
+        <div class="habit-left">
+          <span class="habit-emoji">${h.emoji}</span>
+          <span class="habit-name">${h.name}</span>
+        </div>
+        <div class="habit-check">${done ? '✓' : ''}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="day-nav">
+    <button class="day-nav-btn" onclick="goDay(-1)">&#8249; Prev</button>
+    ${!isToday(y,m,d) ? `<button class="day-nav-btn today-btn" onclick="goToday()">Today</button>` : ''}
+    <button class="day-nav-btn" onclick="goDay(1)">Next &#8250;</button>
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ── HEATMAP ── */
+function renderHeatmap() {
+  const y = viewYear, m = viewMonth;
+  const days = daysInMonth(y, m);
+  const t = todayObj();
+
+  let html = syncBar();
+  html += `<div class="heatmap-scroll"><div class="heatmap-inner">`;
+
+  // Day number headers
+  html += `<div class="hm-header-row"><div class="hm-label-spacer"></div><div class="hm-day-nums">`;
+  for (let d = 1; d <= days; d++) html += `<div class="hm-day-num">${d}</div>`;
+  html += `</div></div>`;
+
+  // Habit rows
+  HABITS.forEach(h => {
+    html += `<div class="hm-row">
+      <div class="hm-habit-label"><span>${h.emoji}</span><span>${h.name.split(' ')[0]}</span></div>`;
+    for (let d = 1; d <= days; d++) {
+      const done = !!getDayData(y, m, d)[h.id];
+      const todayCell = isToday(y, m, d);
+      const futureCell = isFuture(y, m, d);
+      html += `<div class="hm-cell ${done ? 'done' : ''} ${todayCell ? 'today' : ''} ${futureCell ? 'future' : ''}"
+        onclick="toggle(${y},${m},${d},'${h.id}')" title="${d} ${MONTHS[m].slice(0,3)}"></div>`;
+    }
+    html += `</div>`;
+  });
+
+  // Score row
+  html += `<div class="hm-score-sep"></div><div class="hm-score-row">
+    <div class="hm-score-label">Daily score</div>`;
+  for (let d = 1; d <= days; d++) {
+    const score = getDayScore(y, m, d);
+    const pct = score / HABITS.length;
+    const futureCell = isFuture(y, m, d);
+    let bg = 'var(--bg2)';
+    if (!futureCell && score > 0) {
+      bg = pct >= 0.8 ? '#22c77a' : pct >= 0.4 ? '#f0c040' : '#4a5568';
+    }
+    html += `<div class="hm-score-cell" style="background:${bg};opacity:${futureCell ? 0.25 : 1}">${score > 0 && !futureCell ? score : ''}</div>`;
+  }
+  html += `</div>`;
+
+  // Legend
+  html += `<div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap">
+    <span style="font-size:0.68rem;color:var(--text-dim);display:flex;align-items:center;gap:4px">
+      <span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span> Done
+    </span>
+    <span style="font-size:0.68rem;color:var(--text-dim);display:flex;align-items:center;gap:4px">
+      <span style="width:10px;height:10px;background:var(--bg2);border:1px solid var(--border-bright);border-radius:2px;display:inline-block"></span> Not done
+    </span>
+    <span style="font-size:0.68rem;color:var(--text-dim)">Tap any cell to toggle</span>
+  </div>`;
+
+  html += `</div></div>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ── STATS ── */
+function renderStats() {
+  const y = viewYear, m = viewMonth;
+  const days = daysInMonth(y, m);
+  const t = todayObj();
+
+  let loggedDays = 0, totalScore = 0, bestStreak = 0, curStreak = 0;
+  const habitCounts = {};
+  HABITS.forEach(h => habitCounts[h.id] = 0);
+
+  for (let d = 1; d <= days; d++) {
+    if (isFuture(y, m, d)) continue;
+    const dd = getDayData(y, m, d);
+    if (Object.keys(dd).length === 0) continue;
+    const score = getDayScore(y, m, d);
+    loggedDays++;
+    totalScore += score;
+    HABITS.forEach(h => { if (dd[h.id]) habitCounts[h.id]++; });
+    if (score >= 4) { curStreak++; bestStreak = Math.max(bestStreak, curStreak); }
+    else curStreak = 0;
+  }
+
+  const avgPct = loggedDays > 0 ? Math.round(totalScore / loggedDays / HABITS.length * 100) : 0;
+  const streak = getStreak();
+
+  let html = syncBar();
+  html += `<div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-lbl">Avg score</div>
+      <div class="stat-val">${avgPct}%</div>
+      <div class="stat-sub">${MONTHS[m].slice(0,3)} ${y}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Current streak</div>
+      <div class="stat-val" style="color:var(--gold)">${streak}</div>
+      <div class="stat-sub">days ≥ 4/5</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Days logged</div>
+      <div class="stat-val" style="color:var(--green)">${loggedDays}</div>
+      <div class="stat-sub">of ${days} days</div>
+    </div>
+  </div>
+
+  <div class="section-title">Habit breakdown — ${MONTHS[m].slice(0,3)}</div>`;
+
+  HABITS.forEach(h => {
+    const count = habitCounts[h.id];
+    const pct = loggedDays > 0 ? Math.round(count / loggedDays * 100) : 0;
+    const barClass = pct >= 75 ? 'bar-high' : pct >= 40 ? 'bar-mid' : 'bar-low';
+    html += `<div class="habit-stat">
+      <div class="habit-stat-top">
+        <div class="habit-stat-name">${h.emoji} ${h.name}</div>
+        <div class="habit-stat-pct">${pct}%</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+
+  html += `<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+    <div class="section-title">Best month streak</div>
+    <div style="font-family:'Space Mono',monospace;font-size:1.8rem;color:var(--gold);font-weight:700">${bestStreak} <span style="font-size:0.8rem;color:var(--text-dim)">days</span></div>
+    <div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem">Consecutive days with ≥ 4 habits done</div>
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ════════════════════════════════════════════
+   SETUP FLOW
+   ════════════════════════════════════════════ */
+function showSetup() {
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  renderSetup();
+}
+
+function renderSetup() {
+  document.getElementById('setup-content').innerHTML = `
+    <div class="setup-sub">Connect to Firebase so your data syncs across all your devices. You only need to do this once.</div>
+    <div class="setup-section-title">Paste your Firebase config</div>
+    <div class="setup-label">API Key</div>
+    <input class="setup-input" id="s-apiKey" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+    <div class="setup-label">Auth Domain</div>
+    <input class="setup-input" id="s-authDomain" placeholder="your-app.firebaseapp.com" autocomplete="off" spellcheck="false">
+    <div class="setup-label">Database URL</div>
+    <input class="setup-input" id="s-databaseURL" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off" spellcheck="false">
+    <div class="setup-label">Project ID</div>
+    <input class="setup-input" id="s-projectId" placeholder="your-app-id" autocomplete="off" spellcheck="false">
+    <div class="setup-label">App ID</div>
+    <input class="setup-input" id="s-appId" placeholder="1:123456:web:abc123" autocomplete="off" spellcheck="false">
+    <div id="setup-error" class="setup-error" style="display:none"></div>
+    <button class="setup-btn" onclick="connectFirebase()">Connect & Sync</button>
+    <span class="setup-skip" onclick="skipSetup()">Skip for now — use local storage only</span>
+  `;
+}
+
+window.connectFirebase = async function() {
+  const btn = document.querySelector('.setup-btn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+  const errEl = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+
+  const config = {
+    apiKey: document.getElementById('s-apiKey').value.trim(),
+    authDomain: document.getElementById('s-authDomain').value.trim(),
+    databaseURL: document.getElementById('s-databaseURL').value.trim(),
+    projectId: document.getElementById('s-projectId').value.trim(),
+    appId: document.getElementById('s-appId').value.trim(),
+    storageBucket: document.getElementById('s-authDomain').value.trim().replace('firebaseapp.com','appspot.com'),
+  };
+
+  if (!config.apiKey || !config.databaseURL) {
+    errEl.textContent = 'Please fill in at least API Key and Database URL.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Connect & Sync';
+    return;
+  }
+
+  try {
+    localStorage.setItem('bhabits_config', JSON.stringify(config));
+    await initFirebase(config);
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    updateMonthLabel();
+    render();
+  } catch(e) {
+    errEl.textContent = 'Connection failed: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Connect & Sync';
+  }
+};
+
+window.skipSetup = function() {
+  localStorage.setItem('bhabits_skipped', '1');
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateMonthLabel();
+  render();
+};
+
+async function initFirebase(config) {
+  const app = initializeApp(config);
+  db = getDatabase(app);
+  dbRef = ref(db, 'habits');
+
+  const snap = await get(dbRef);
+  if (snap.exists()) {
+    habitData = snap.val() || {};
+    saveLocal();
+  } else if (Object.keys(habitData).length > 0) {
+    await set(dbRef, habitData);
+  }
+
+  onValue(dbRef, (snapshot) => {
+    habitData = snapshot.val() || {};
+    saveLocal();
+    syncStatus = 'synced';
+    render();
+  });
+
+  useFirebase = true;
+  syncStatus = 'synced';
+}
+
+/* ════════════════════════════════════════════
+   BOOT
+   ════════════════════════════════════════════ */
+async function boot() {
+  loadLocal();
+
+  const savedConfig = localStorage.getItem('bhabits_config');
+  const skipped = localStorage.getItem('bhabits_skipped');
+
+  if (savedConfig) {
+    try {
+      const config = JSON.parse(savedConfig);
+      document.getElementById('app').style.display = 'flex';
+      updateMonthLabel();
+      render();
+      await initFirebase(config);
+      render();
+    } catch(e) {
+      document.getElementById('app').style.display = 'flex';
+      updateMonthLabel();
+      render();
+    }
+  } else if (skipped) {
+    document.getElementById('app').style.display = 'flex';
+    updateMonthLabel();
+    render();
+  } else {
+    showSetup();
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
