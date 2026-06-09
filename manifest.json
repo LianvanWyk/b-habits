@@ -4,8 +4,8 @@
   "description": "Your personal habit tracker",
   "start_url": "/b-habits/",
   "display": "standalone",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "background_color": "#ffffff",
+  "theme_color": "#00c2a8",
   "orientation": "portrait",
   "icons": [
     {
