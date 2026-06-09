@@ -402,6 +402,136 @@ body {
   margin-bottom: 1rem; padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
 }
+
+/* ── Add Habit ── */
+.add-habit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--teal-dim);
+  border: 1.5px dashed var(--teal-mid);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  color: var(--teal);
+  font-size: 0.88rem;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-top: 0.55rem;
+  transition: all 0.18s;
+}
+.add-habit-btn:hover { background: var(--teal-mid); }
+
+.add-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+  display: flex; align-items: flex-end;
+  padding: 0;
+}
+.add-modal {
+  background: var(--bg1);
+  border: 1px solid var(--border-bright);
+  border-radius: 16px 16px 0 0;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.add-modal-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.add-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+.emoji-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.emoji-btn:hover { background: var(--bg3); }
+.emoji-btn.selected { border-color: var(--teal); background: var(--teal-dim); }
+.add-habit-input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.add-habit-input:focus { border-color: var(--teal); }
+.add-habit-input::placeholder { color: var(--text-dim); }
+.add-modal-actions { display: flex; gap: 0.6rem; }
+.add-save-btn {
+  flex: 1;
+  background: var(--teal);
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem;
+  color: #000;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.add-save-btn:hover { opacity: 0.85; }
+.add-save-btn:disabled { opacity: 0.4; cursor: default; }
+.add-cancel-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 0.7rem 1.1rem;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.add-cancel-btn:hover { background: var(--bg3); color: var(--text); }
+.habit-row-delete {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 0.5rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.habit-row:hover .habit-row-delete { opacity: 1; }
+.habit-row-delete:hover { color: #ff6b6b; }
 </style>
 </head>
 <body>
@@ -432,6 +562,22 @@ body {
   <div class="content" id="content"></div>
 </div>
 
+<!-- Add Habit Modal -->
+<div class="add-modal-overlay" id="add-modal" style="display:none" onclick="closeAddModal(event)">
+  <div class="add-modal">
+    <div class="add-modal-title">
+      <span>Add new habit</span>
+      <button class="add-modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="emoji-grid" id="emoji-grid"></div>
+    <input class="add-habit-input" id="habit-name-input" placeholder="Habit name e.g. Meditation" maxlength="30">
+    <div class="add-modal-actions">
+      <button class="add-cancel-btn" onclick="closeAddModal()">Cancel</button>
+      <button class="add-save-btn" id="save-habit-btn" onclick="saveNewHabit()">Add Habit</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -453,7 +599,7 @@ const FIREBASE_CONFIG = {
 /* ════════════════════════════════════════════
    APP STATE
    ════════════════════════════════════════════ */
-const HABITS = [
+const DEFAULT_HABITS = [
   { id: 'exercise', name: 'Exercise / Movement', emoji: '🏃' },
   { id: 'sleep',    name: 'Sleep',               emoji: '😴' },
   { id: 'diet',     name: 'Diet / Eating well',  emoji: '🥗' },
@@ -677,15 +823,20 @@ function renderToday() {
     html += `<div class="habits-list">`;
     HABITS.forEach(h => {
       const done = !!dd[h.id];
-      html += `<div class="habit-row ${done ? 'done' : ''}" onclick="toggle(${y},${m},${d},'${h.id}')">
+      const isCustom = !DEFAULT_HABITS.find(dh => dh.id === h.id);
+    html += `<div class="habit-row ${done ? 'done' : ''}" onclick="toggle(${y},${m},${d},'${h.id}')">
         <div class="habit-left">
           <span class="habit-emoji">${h.emoji}</span>
           <span class="habit-name">${h.name}</span>
         </div>
-        <div class="habit-check">${done ? '✓' : ''}</div>
+        <div style="display:flex;align-items:center">
+          ${isCustom ? `<button class="habit-row-delete" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="Remove habit">✕</button>` : ''}
+          <div class="habit-check">${done ? '✓' : ''}</div>
+        </div>
       </div>`;
     });
-    html += `</div>`;
+    html += `</div>
+    <button class="add-habit-btn" onclick="openAddModal()">＋ Add habit</button>`;
   }
 
   html += `<div class="day-nav">
@@ -924,6 +1075,53 @@ async function initFirebase(config) {
 /* ════════════════════════════════════════════
    BOOT
    ════════════════════════════════════════════ */
+
+const EMOJI_OPTIONS = ['🏃', '😴', '🥗', '📵', '💼', '🧘', '📚', '💊', '🚶', '🏋️', '🎯', '💧', '🍎', '☀️', '🌙', '✍️', '🎨', '🎵', '🧹', '💻'];
+let selectedEmoji = EMOJI_OPTIONS[0];
+
+window.openAddModal = function() {
+  selectedEmoji = EMOJI_OPTIONS[0];
+  const grid = document.getElementById('emoji-grid');
+  grid.innerHTML = EMOJI_OPTIONS.map((e, i) =>
+    `<div class="emoji-btn ${i === 0 ? 'selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</div>`
+  ).join('');
+  document.getElementById('habit-name-input').value = '';
+  document.getElementById('add-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('habit-name-input').focus(), 100);
+};
+
+window.closeAddModal = function(e) {
+  if (!e || e.target === document.getElementById('add-modal')) {
+    document.getElementById('add-modal').style.display = 'none';
+  }
+};
+
+window.selectEmoji = function(emoji, el) {
+  selectedEmoji = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+};
+
+window.saveNewHabit = function() {
+  const name = document.getElementById('habit-name-input').value.trim();
+  if (!name) { document.getElementById('habit-name-input').focus(); return; }
+  const id = 'custom_' + Date.now();
+  const custom = getCustomHabits();
+  custom.push({ id, name, emoji: selectedEmoji });
+  saveCustomHabits(custom);
+  HABITS = loadHabits();
+  document.getElementById('add-modal').style.display = 'none';
+  render();
+};
+
+window.deleteHabit = function(id) {
+  if (!confirm('Remove this habit?')) return;
+  const custom = getCustomHabits().filter(h => h.id !== id);
+  saveCustomHabits(custom);
+  HABITS = loadHabits();
+  render();
+};
+
 async function boot() {
   loadLocal();
 
