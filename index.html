@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#f5f7fa">
+<meta name="theme-color" content="#f0f4f8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>b-Habits</title>
@@ -29,15 +29,15 @@ body {
   --bg1: #ffffff;
   --bg2: #f8fafc;
   --bg3: #e8edf5;
-  --blue: #2563eb;
-  --blue-dim: rgba(37,99,235,0.08);
-  --blue-mid: rgba(37,99,235,0.2);
+  --blue: #00c2a8;
+  --blue-dim: rgba(0,194,168,0.08);
+  --blue-mid: rgba(0,194,168,0.2);
   --gold: #d97706;
-  --green: #16a34a;
-  --green-dim: rgba(22,163,74,0.1);
-  --green-border: rgba(22,163,74,0.35);
-  --green-done-bg: #14532d;
-  --green-done-text: #22c55e;
+  --green: #00c2a8;
+  --green-dim: rgba(0,194,168,0.1);
+  --green-border: rgba(0,194,168,0.4);
+  --green-done-bg: rgba(0,194,168,0.15);
+  --green-done-text: #00c2a8;
   --muted: #94a3b8;
   --text: #1e293b;
   --text-dim: #64748b;
@@ -92,7 +92,7 @@ body {
   background: #fff; border-radius: var(--radius-sm); border: 1px solid var(--border);
 }
 .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
-.sync-dot.synced { background: var(--green); }
+.sync-dot.synced { background: #00c2a8; }
 .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
 .sync-dot.error { background: #dc2626; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
@@ -133,12 +133,12 @@ body {
 }
 .habit-row:active { transform: scale(0.98); }
 .habit-row:hover { background: var(--bg2); border-color: var(--border-md); }
-.habit-row.done { background: var(--green-done-bg); border-color: transparent; }
+.habit-row.done { background: rgba(0,194,168,0.12); border-color: rgba(0,194,168,0.35); }
 
 .habit-left { display: flex; align-items: center; gap: 0.75rem; }
 .habit-emoji { font-size: 1.15rem; }
 .habit-name { font-size: 0.88rem; font-weight: 500; transition: color 0.18s; color: var(--text); }
-.habit-row.done .habit-name { color: var(--green-done-text); }
+.habit-row.done .habit-name { color: #007a6a; font-weight: 600; }
 
 .habit-right { display: flex; align-items: center; }
 .habit-check {
@@ -147,7 +147,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 0.8rem; flex-shrink: 0; transition: all 0.2s;
 }
-.habit-row.done .habit-check { background: var(--green-done-text); border-color: var(--green-done-text); color: #000; font-weight: 700; }
+.habit-row.done .habit-check { background: #00c2a8; border-color: #00c2a8; color: #fff; font-weight: 700; }
 
 .habit-row-delete {
   font-size: 0.75rem; color: var(--text-dim); background: none; border: none;
@@ -195,7 +195,7 @@ body {
   flex-shrink: 0; cursor: pointer; transition: transform 0.1s;
 }
 .hm-cell:hover { transform: scale(1.25); z-index: 2; position: relative; }
-.hm-cell.done { background: var(--green); border-color: var(--green); }
+.hm-cell.done { background: #00c2a8; border-color: var(--green); }
 .hm-cell.today { outline: 2px solid var(--blue); outline-offset: 1px; }
 .hm-cell.future { opacity: 0.25; cursor: default; pointer-events: none; }
 .hm-score-sep { height: 1px; background: var(--border); margin: 8px 0; }
@@ -225,7 +225,7 @@ body {
 .bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
 .bar-low { background: var(--muted); }
 .bar-mid { background: var(--gold); }
-.bar-high { background: var(--green); }
+.bar-high { background: #00c2a8; }
 
 /* Add habit modal */
 .add-modal-overlay {
@@ -260,7 +260,7 @@ body {
 .add-habit-input::placeholder { color: var(--text-dim); }
 .add-modal-actions { display: flex; gap: 0.6rem; }
 .add-save-btn {
-  flex: 1; background: var(--blue); border: none; border-radius: 8px;
+  flex: 1; background: #00c2a8; border: none; border-radius: 8px;
   padding: 0.7rem; color: #fff; font-size: 0.88rem; font-weight: 600;
   font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.15s;
 }
@@ -294,7 +294,7 @@ body {
 .setup-input:focus { border-color: var(--blue); }
 .setup-input::placeholder { color: var(--text-dim); }
 .setup-btn {
-  width: 100%; background: var(--blue); border: none; border-radius: 8px;
+  width: 100%; background: #00c2a8; border: none; border-radius: 8px;
   padding: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 600;
   font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.15s; margin-top: 0.5rem;
 }
@@ -532,7 +532,7 @@ function renderHeatmap() {
   for (let d=1;d<=days;d++) {
     const score=getDayScore(y,m,d), pct=score/HABITS.length, futureCell=isFuture(y,m,d);
     let bg='var(--bg3)';
-    if (!futureCell&&score>0) bg = pct>=0.8?'#16a34a':pct>=0.4?'#d97706':'#94a3b8';
+    if (!futureCell&&score>0) bg = pct>=0.8?'#00c2a8':pct>=0.4?'#d97706':'#cbd5e1';
     html += `<div class="hm-score-cell" style="background:${bg};opacity:${futureCell?0.25:1}">${score>0&&!futureCell?score:''}</div>`;
   }
   html += `</div><div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap">
@@ -561,7 +561,7 @@ function renderStats() {
   html += `<div class="stats-grid">
     <div class="stat-card"><div class="stat-lbl">Avg score</div><div class="stat-val">${avgPct}%</div><div class="stat-sub">${MONTHS[m].slice(0,3)} ${y}</div></div>
     <div class="stat-card"><div class="stat-lbl">Streak</div><div class="stat-val" style="color:var(--gold)">${streak}</div><div class="stat-sub">days ≥ 4/5</div></div>
-    <div class="stat-card"><div class="stat-lbl">Days logged</div><div class="stat-val" style="color:var(--green)">${loggedDays}</div><div class="stat-sub">of ${days} days</div></div>
+    <div class="stat-card"><div class="stat-lbl">Days logged</div><div class="stat-val" style="color:#00c2a8">${loggedDays}</div><div class="stat-sub">of ${days} days</div></div>
   </div>
   <div class="section-title">Habit breakdown — ${MONTHS[m].slice(0,3)}</div>`;
   HABITS.forEach(h => {
