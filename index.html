@@ -607,6 +607,19 @@ const DEFAULT_HABITS = [
   { id: 'work',     name: 'Work',                emoji: '💼' },
 ];
 
+function loadHabits() {
+  try {
+    const custom = JSON.parse(localStorage.getItem('bhabits_custom') || '[]');
+    return [...DEFAULT_HABITS, ...custom];
+  } catch(e) { return [...DEFAULT_HABITS]; }
+}
+function saveCustomHabits(c) { localStorage.setItem('bhabits_custom', JSON.stringify(c)); }
+function getCustomHabits() {
+  try { return JSON.parse(localStorage.getItem('bhabits_custom') || '[]'); }
+  catch(e) { return []; }
+}
+let HABITS = loadHabits();
+
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
