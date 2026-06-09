@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0d1117">
+<meta name="theme-color" content="#0a3060">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>b-Habits</title>
@@ -16,7 +16,7 @@
 html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
 body {
   font-family: 'DM Sans', sans-serif;
-  background: #0d1117;
+  background: #0a3060;
   color: #dde4f0;
   min-height: 100vh;
   overscroll-behavior: none;
@@ -24,24 +24,24 @@ body {
 
 /* ── Variables ── */
 :root {
-  --bg0: #0d1117;
-  --bg1: #161b27;
-  --bg2: #1e2635;
-  --bg3: #28354a;
-  --teal: #00c2a8;
-  --teal-dim: rgba(0,194,168,0.12);
-  --teal-mid: rgba(0,194,168,0.3);
+  --bg0: #0a3060;
+  --bg1: #0d3d7a;
+  --bg2: #104a94;
+  --bg3: #1a5aaa;
+  --teal: #63b3ff;
+  --teal-dim: rgba(99,179,255,0.18);
+  --teal-mid: rgba(99,179,255,0.38);
   --gold: #f0c040;
   --gold-dim: rgba(240,192,64,0.12);
-  --green: #4d9fff;
-  --green-dim: rgba(77,159,255,0.18);
-  --green-border: rgba(77,159,255,0.5);
-  --muted: #4a5568;
-  --text: #e8eeff;
-  --text-dim: #6b7a99;
-  --text-mid: #9aaac8;
-  --border: rgba(255,255,255,0.07);
-  --border-bright: rgba(255,255,255,0.13);
+  --green: #63b3ff;
+  --green-dim: rgba(99,179,255,0.2);
+  --green-border: rgba(99,179,255,0.55);
+  --muted: #1a5090;
+  --text: #e8f4ff;
+  --text-dim: #90bce0;
+  --text-mid: #b0d4f0;
+  --border: rgba(255,255,255,0.1);
+  --border-bright: rgba(255,255,255,0.22);
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -325,7 +325,7 @@ body {
 .habit-stat-pct { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--teal); }
 .bar-track { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-.bar-low { background: #3a5a8a; }
+.bar-low { background: #2a6aaa; }
 .bar-mid { background: var(--gold); }
 .bar-high { background: var(--teal); }
 
@@ -734,7 +734,7 @@ function renderHeatmap() {
     const futureCell = isFuture(y, m, d);
     let bg = 'var(--bg2)';
     if (!futureCell && score > 0) {
-      bg = pct >= 0.8 ? '#4d9fff' : pct >= 0.4 ? '#f0c040' : '#4a5568';
+      bg = pct >= 0.8 ? '#63b3ff' : pct >= 0.4 ? '#f0c040' : '#1a5090';
     }
     html += `<div class="hm-score-cell" style="background:${bg};opacity:${futureCell ? 0.25 : 1}">${score > 0 && !futureCell ? score : ''}</div>`;
   }
