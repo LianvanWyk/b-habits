@@ -344,6 +344,67 @@ body {
 .setup-skip:hover { color: var(--text); }
 .setup-error { font-size: 0.75rem; color: #dc2626; margin-top: -0.5rem; margin-bottom: 0.75rem; }
 .setup-section-title { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+
+/* Edit habit modal */
+.edit-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center;
+  z-index: 300; padding: 1.5rem; animation: editFadeIn 0.15s ease;
+}
+@keyframes editFadeIn { from{opacity:0} to{opacity:1} }
+.edit-modal {
+  background: #fff; border: 1px solid var(--border-md);
+  border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 380px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12); animation: editSlideUp 0.2s ease;
+}
+@keyframes editSlideUp { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
+.edit-modal-title {
+  font-family: 'Space Mono', monospace; font-size: 0.88rem; color: var(--text);
+  margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center;
+}
+.edit-modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.1rem; cursor: pointer; }
+.edit-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+.edit-input {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border-md);
+  border-radius: 8px; padding: 0.6rem 0.85rem; color: var(--text);
+  font-size: 0.88rem; font-family: 'DM Sans', sans-serif; margin-bottom: 0.9rem;
+  outline: none; transition: border-color 0.15s;
+}
+.edit-input:focus { border-color: var(--blue); }
+.edit-input::placeholder { color: var(--text-dim); }
+.edit-emoji-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; margin-bottom: 0.75rem; }
+.edit-emoji-btn {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 7px;
+  padding: 0.35rem; font-size: 1.05rem; cursor: pointer; text-align: center; transition: all 0.15s;
+}
+.edit-emoji-btn:hover { background: var(--bg3); }
+.edit-emoji-btn.selected { border-color: var(--blue); background: var(--blue-dim); }
+.edit-modal-actions { display: flex; gap: 0.6rem; margin-top: 0.25rem; }
+.edit-cancel-btn {
+  background: var(--bg2); border: 1px solid var(--border-md); border-radius: 8px;
+  padding: 0.65rem 1rem; color: var(--text-dim); font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s;
+}
+.edit-cancel-btn:hover { background: var(--bg3); color: var(--text); }
+.edit-save-btn {
+  flex: 1; background: #00c2a8; border: none; border-radius: 8px;
+  padding: 0.65rem; color: #fff; font-size: 0.85rem; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.15s;
+}
+.edit-save-btn:hover { opacity: 0.88; }
+
+/* Edit pencil on habit rows */
+.habit-edit-btn {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border-md); background: var(--bg2);
+  color: var(--text-dim); display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+  opacity: 0; margin-right: 0.35rem;
+}
+.habit-row:hover .habit-edit-btn { opacity: 1; }
+.habit-edit-btn:hover { background: var(--blue-dim); color: var(--blue); border-color: var(--blue-mid); }
+.habit-note { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; font-weight: 400; }
+.habit-row.done .habit-note { color: rgba(0,122,106,0.7); }
 </style>
 </head>
 <body>
@@ -436,6 +497,15 @@ const t = new Date();
 let viewYear = t.getFullYear(), viewMonth = t.getMonth(), viewDay = t.getDate();
 let currentTab = 'today';
 let selectedEmoji = EMOJI_OPTIONS[0];
+
+// Customisation: { [habitId]: { name, emoji, note } }
+let habitMeta = {};
+function loadHabitMeta() { try { habitMeta = JSON.parse(localStorage.getItem('bhabits_meta') || '{}'); } catch(e) { habitMeta = {}; } }
+function saveHabitMeta() { try { localStorage.setItem('bhabits_meta', JSON.stringify(habitMeta)); } catch(e) {} }
+function habitDisplay(h) {
+  const ov = habitMeta[h.id] || {};
+  return { name: ov.name || h.name, emoji: ov.emoji || h.emoji, note: ov.note || '' };
+}
 
 function todayObj() { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; }
 function dateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
@@ -569,9 +639,13 @@ function renderToday() {
       if (h.id === 'exercise') {
         const exDone = isExerciseDone(dd);
         const collapsed = !exerciseExpanded;
+        const disp = habitDisplay(h);
         html += `<div class="habit-row ${exDone?'done':''} expandable ${collapsed?'collapsed':''}" onclick="toggleExerciseExpand(event)">
-          <div class="habit-left"><span class="habit-emoji">${h.emoji}</span><span class="habit-name">${h.name}<span class="habit-chevron">▾</span></span></div>
+          <div class="habit-left"><span class="habit-emoji">${disp.emoji}</span>
+            <div><div class="habit-name">${disp.name}<span class="habit-chevron">▾</span></div>${disp.note?`<div class="habit-note">${disp.note}</div>`:''}</div>
+          </div>
           <div class="habit-right">
+            <div class="habit-edit-btn" onclick="event.stopPropagation();openEditModal('${h.id}')" title="Edit">✎</div>
             <div class="habit-check">${exDone?'✓':''}</div>
           </div>
         </div>
@@ -586,9 +660,13 @@ function renderToday() {
         html += `</div>`;
       } else {
         const done = !!dd[h.id];
+        const disp = habitDisplay(h);
         html += `<div class="habit-row ${done?'done':''}" onclick="toggle(${y},${m},${d},'${h.id}')">
-          <div class="habit-left"><span class="habit-emoji">${h.emoji}</span><span class="habit-name">${h.name}</span></div>
+          <div class="habit-left"><span class="habit-emoji">${disp.emoji}</span>
+            <div><div class="habit-name">${disp.name}</div>${disp.note?`<div class="habit-note">${disp.note}</div>`:''}</div>
+          </div>
           <div class="habit-right">
+            <div class="habit-edit-btn" onclick="event.stopPropagation();openEditModal('${h.id}')" title="Edit">✎</div>
             ${isCustom?`<button class="habit-row-delete" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="Remove">✕</button>`:''}
             <div class="habit-check">${done?'✓':''}</div>
           </div>
@@ -627,7 +705,8 @@ function renderHeatmap() {
       // Bottom divider line after the exercise group
       html += `<div class="hm-row"><div class="hm-label-spacer" style="width:110px"></div><div style="flex:1;height:1px;background:var(--border-md);margin:2px 0"></div></div>`;
     } else {
-      html += `<div class="hm-row"><div class="hm-habit-label"><span>${h.emoji}</span><span>${h.name.split(' ')[0]}</span></div>`;
+      const disp = habitDisplay(h);
+      html += `<div class="hm-row"><div class="hm-habit-label"><span>${disp.emoji}</span><span>${disp.name.split(' ')[0]}</span></div>`;
       for (let d=1;d<=days;d++) {
         const done=!!getDayData(y,m,d)[h.id], todayCell=isToday(y,m,d), futureCell=isFuture(y,m,d);
         html += `<div class="hm-cell ${done?'done':''} ${todayCell?'today':''} ${futureCell?'future':''}" onclick="toggle(${y},${m},${d},'${h.id}')"></div>`;
@@ -679,7 +758,8 @@ function renderStats() {
   HABITS.forEach(h => {
     const count=habitCounts[h.id], pct=loggedDays>0?Math.round(count/loggedDays*100):0;
     const barClass=pct>=75?'bar-high':pct>=40?'bar-mid':'bar-low';
-    html += `<div class="habit-stat"><div class="habit-stat-top"><div class="habit-stat-name">${h.emoji} ${h.name}</div><div class="habit-stat-pct">${pct}%</div></div><div class="bar-track"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div></div>`;
+    const disp = habitDisplay(h);
+    html += `<div class="habit-stat"><div class="habit-stat-top"><div class="habit-stat-name">${disp.emoji} ${disp.name}</div><div class="habit-stat-pct">${pct}%</div></div><div class="bar-track"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div></div>`;
     if (h.id === 'exercise') {
       html += `<div style="border-left:2px solid var(--blue-mid);margin:0 0 0.5rem 1rem;padding-left:0.5rem">`;
       EXERCISE_SUBS.forEach(s => {
@@ -785,6 +865,7 @@ async function initFirebase(config) {
 
 async function boot() {
   loadLocal();
+  loadHabitMeta();
   const savedConfig = localStorage.getItem('bhabits_config');
   const skipped = localStorage.getItem('bhabits_skipped');
   if (savedConfig) {
@@ -796,6 +877,72 @@ async function boot() {
     document.getElementById('app').style.display='flex'; updateMonthLabel(); render();
   } else { showSetup(); }
 }
+
+/* Edit habit modal */
+const EDIT_EMOJI_OPTIONS = ['🏃','💪','🏋️','🚴','🧘','😴','🌙','⏰','🥗','🥦','💧','📵','💼','📚','✍️','🎯','🔥','⭐','☀️','🎨'];
+let editSelectedEmoji = '';
+
+window.openEditModal = function(hid) {
+  const h = HABITS.find(x => x.id === hid);
+  if (!h) return;
+  const disp = habitDisplay(h);
+  editSelectedEmoji = disp.emoji;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'edit-modal-overlay';
+  overlay.id = 'edit-modal-overlay';
+  overlay.onclick = e => { if (e.target === overlay) closeEditModal(); };
+
+  overlay.innerHTML = `<div class="edit-modal">
+    <div class="edit-modal-title">
+      <span>✎ Edit Habit</span>
+      <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-label">Name</div>
+    <input class="edit-input" id="edit-name-input" value="${disp.name}" placeholder="Habit name" maxlength="40">
+    <div class="edit-label">Target / Note <span style="font-weight:400;color:var(--text-dim)">(optional)</span></div>
+    <input class="edit-input" id="edit-note-input" value="${disp.note}" placeholder="e.g. Wake up before 6:30am">
+    <div class="edit-label">Icon</div>
+    <div class="edit-emoji-grid">${EDIT_EMOJI_OPTIONS.map(e => `<div class="edit-emoji-btn${e===disp.emoji?' selected':''}" onclick="pickEditEmoji('${e}',this)">${e}</div>`).join('')}</div>
+    <input class="edit-input" id="edit-emoji-custom" value="${disp.emoji}" placeholder="Or type any emoji" maxlength="4" oninput="syncCustomEmoji(this)">
+    <div class="edit-modal-actions">
+      <button class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+      <button class="edit-save-btn" onclick="saveEditModal('${hid}')">Save</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+  document.getElementById('edit-name-input').focus();
+};
+
+window.pickEditEmoji = function(emoji, el) {
+  editSelectedEmoji = emoji;
+  document.querySelectorAll('.edit-emoji-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('edit-emoji-custom').value = emoji;
+};
+
+window.syncCustomEmoji = function(el) {
+  editSelectedEmoji = el.value.trim() || editSelectedEmoji;
+  document.querySelectorAll('.edit-emoji-btn').forEach(b => b.classList.remove('selected'));
+};
+
+window.closeEditModal = function() {
+  const el = document.getElementById('edit-modal-overlay');
+  if (el) el.remove();
+};
+
+window.saveEditModal = function(hid) {
+  const name = document.getElementById('edit-name-input').value.trim();
+  const note = document.getElementById('edit-note-input').value.trim();
+  const emoji = document.getElementById('edit-emoji-custom').value.trim() || editSelectedEmoji;
+  if (!name) { document.getElementById('edit-name-input').focus(); return; }
+  if (!habitMeta[hid]) habitMeta[hid] = {};
+  habitMeta[hid] = { name, note, emoji };
+  saveHabitMeta();
+  closeEditModal();
+  render();
+};
 
 boot();
 </script>
